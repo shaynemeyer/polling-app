@@ -1,13 +1,9 @@
-from fastapi import FastAPI
-from upstash_redis import Redis
-from dotenv import load_dotenv
-import os
+from uuid import UUID
+from fastapi import FastAPI, HTTPException
+
 from app.models.Polls import Poll, PollCreate
+from app.services import utils
 
-load_dotenv()
-
-REDIS_URL = os.getenv("REDIS_URL")
-REDIS_TOKEN = os.getenv("REDIS_TOKEN")
 
 app = FastAPI()
 
@@ -19,22 +15,18 @@ def test():
 
 @app.post("/polls/create")
 def create_poll(poll: PollCreate):
-
-    # return Poll(title="Some placeholder title", options=["yes", "no", "maybe"])
     new_poll = poll.create_poll()
-    return {"detail": "Poll successfully created", "poll_id": new_poll.poll_id}
+
+    utils.save_poll(new_poll)
+
+    return {"detail": "Poll successfully created", "poll_id": new_poll.id}
 
 
-redis_client = Redis(url=REDIS_URL, token=REDIS_TOKEN)
+@app.get("/polls/{poll_id}")
+def get_polls(poll_id: UUID):
+    poll = utils.get_poll(poll_id)
 
+    if not poll:
+        raise HTTPException(status_code=404, detail="A poll by that id was not found")
 
-@app.post("/redis/save", tags=["throwaway"])
-def save_redis(id: str, name: str):
-    redis_client.set(id, name)
-    return {"status": "success"}
-
-
-@app.get("/redis/get/{id}", tags=["throwaway"])
-def get_redis(id: str):
-    name = redis_client.get(id)
-    return {"id": id, "name": name}
+    return poll
