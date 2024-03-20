@@ -26,3 +26,16 @@ def get_poll(poll_id: UUID) -> Optional[Poll]:
         return Poll.model_validate_json(poll_json)
 
     return None
+
+
+def get_choice_id_by_label(poll_id: UUID, label: int) -> Optional[UUID]:
+    poll = get_poll(poll_id)
+
+    if not poll:
+        return None
+
+    for choice in poll.options:
+        if choice.label == label:
+            return choice.id
+
+    return None

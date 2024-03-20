@@ -13,7 +13,11 @@ def create_poll(poll: PollCreate):
 
     utils.save_poll(new_poll)
 
-    return {"detail": "Poll successfully created", "poll_id": new_poll.id}
+    return {
+        "detail": "Poll successfully created",
+        "poll_id": new_poll.id,
+        "poll": new_poll,
+    }
 
 
 @router.get("/{poll_id}")
