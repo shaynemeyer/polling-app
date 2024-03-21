@@ -1,7 +1,7 @@
 from upstash_redis import Redis
 from dotenv import load_dotenv
 from uuid import UUID
-from typing import Optional
+from typing import List, Optional
 import os
 
 from app.models.Polls import Poll
@@ -29,9 +29,25 @@ def get_poll(poll_id: UUID) -> Optional[Poll]:
     return None
 
 
+def get_all_polls() -> List[Poll]:
+    poll_keys = redis_client.keys("poll:*")
+    polls = []
+
+    for key in poll_keys:
+        poll_json = redis_client.get(key)
+        if poll_json:
+            polls.append(Poll.model_validate_json(poll_json))
+
+    return polls
+
+
 def get_choice_id_by_label(poll_id: UUID, label: int) -> Optional[UUID]:
     poll = get_poll(poll_id)
 
+    return get_choice_id_by_label_given_poll(poll, label)
+
+
+def get_choice_id_by_label_given_poll(poll: Poll, label: int) -> Optional[UUID]:
     if not poll:
         return None
 
