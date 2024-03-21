@@ -1,3 +1,4 @@
+from enum import Enum
 from uuid import UUID
 from fastapi import APIRouter, HTTPException
 
@@ -30,11 +31,30 @@ def get_poll(poll_id: UUID):
     return poll
 
 
+class PollStatus(Enum):
+    ACTIVE = "active"
+    EXPIRED = "expired"
+    ALL = "all"
+
+
 @router.get("/")
-def get_polls():
+def get_polls(status: PollStatus = PollStatus.ACTIVE):
     polls = utils.get_all_polls()
 
     if not polls:
         raise HTTPException(status_code=404, detail="No polls where found")
 
-    return polls
+    if status == PollStatus.ACTIVE:
+        filtered_polls = [poll for poll in polls if poll.is_active()]
+    elif status == PollStatus.EXPIRED:
+        filtered_polls = [poll for poll in polls if not poll.is_active()]
+    else:
+        filtered_polls = polls
+
+    return {"count": len(filtered_polls), "polls": filtered_polls}
+
+
+@router.get("/{poll_id}/results")
+def get_results(poll_id: UUID):
+    results = utils.get_vote_count(poll_id=poll_id)
+    return {"results": results}

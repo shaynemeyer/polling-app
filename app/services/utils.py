@@ -1,7 +1,7 @@
 from upstash_redis import Redis
 from dotenv import load_dotenv
 from uuid import UUID
-from typing import List, Optional
+from typing import Dict, List, Optional
 import os
 
 from app.models.Polls import Poll
@@ -68,3 +68,10 @@ def get_vote(poll_id: UUID, email: str) -> Optional[Vote]:
 def save_vote(poll_id: UUID, vote: Vote) -> None:
     vote_json = vote.model_dump_json()
     redis_client.hset(f"votes:{poll_id}", vote.voter.email, vote_json)
+    redis_client.hincrby(f"vote_count:{poll_id}", str(vote.choice_id), 1)
+
+
+def get_vote_count(poll_id: UUID) -> Dict[UUID, int]:
+    vote_counts = redis_client.hgetall(f"vote_count:{poll_id}")
+
+    return {UUID(choice_id): int(count) for choice_id, count in vote_counts.items()}
