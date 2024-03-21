@@ -31,12 +31,10 @@ def get_poll(poll_id: UUID) -> Optional[Poll]:
 
 def get_all_polls() -> List[Poll]:
     poll_keys = redis_client.keys("poll:*")
-    polls = []
+    # Spread poll_keys for .mget
+    poll_json = redis_client.mget(*poll_keys)
 
-    for key in poll_keys:
-        poll_json = redis_client.get(key)
-        if poll_json:
-            polls.append(Poll.model_validate_json(poll_json))
+    polls = [Poll.model_validate_json(pj) for pj in poll_json if pj]
 
     return polls
 
