@@ -5,6 +5,7 @@ from typing import Dict, List, Optional
 import os
 
 from app.models.Polls import Poll
+from app.models.Results import PollResults, Result
 from app.models.Votes import Vote
 
 load_dotenv()
@@ -75,3 +76,30 @@ def get_vote_count(poll_id: UUID) -> Dict[UUID, int]:
     vote_counts = redis_client.hgetall(f"vote_count:{poll_id}")
 
     return {UUID(choice_id): int(count) for choice_id, count in vote_counts.items()}
+
+
+def get_poll_results(poll_id: UUID) -> Optional[PollResults]:
+    poll = get_poll(poll_id=poll_id)
+
+    if not poll:
+        return None
+
+    vote_counts = get_vote_count(poll_id=poll_id)
+    total_votes = sum(vote_counts.values())
+
+    results = [
+        Result(description=choice.description, vote_count=vote_counts.get(choice.id, 0))
+        for choice in poll.options
+    ]
+
+    results = sorted(results, key=lambda x: x.vote_count, reverse=True)
+
+    return PollResults(title=poll.title, total_votes=total_votes, results=results)
+
+
+def delete_poll(poll_id: UUID) -> None:
+    keys_to_delete = [f"poll:{poll_id}", f"votes:{poll_id}", f"votes_count:{poll_id}"]
+
+    redis_client.delete(
+        *keys_to_delete
+    )  # spread the keys to delete for the redis delete

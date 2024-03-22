@@ -56,5 +56,4 @@ def get_polls(status: PollStatus = PollStatus.ACTIVE):
 
 @router.get("/{poll_id}/results")
 def get_results(poll_id: UUID):
-    results = utils.get_vote_count(poll_id=poll_id)
-    return {"results": results}
+    return utils.get_poll_results(poll_id=poll_id)
