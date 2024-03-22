@@ -10,7 +10,7 @@ from app.models.Votes import Vote
 
 load_dotenv()
 
-REDIS_URL = os.getenv("REDIS_URL")
+REDIS_URL = os.getenv("REDIS_STORE_URL")
 REDIS_TOKEN = os.getenv("REDIS_TOKEN")
 
 redis_client = Redis(url=REDIS_URL, token=REDIS_TOKEN)
